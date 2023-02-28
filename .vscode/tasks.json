@@ -1,0 +1,101 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-A",
+                "x64",
+                "../",
+                "-D",
+                "CMAKE_BUILD_TYPE=Release"
+            ],
+            "label": "cmake prepare build",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "problemMatcher": [],
+            "hide": true
+        },
+        {
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-A",
+                "x64",
+                "../",
+                "-D",
+                "CMAKE_BUILD_TYPE=Debug"
+            ],
+            "label": "cmake prepare build debug",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "problemMatcher": [],
+            "hide": true
+        },
+        {
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build",
+                ".",
+                "--config",
+                "Release"
+            ],
+            "label": "cmake build",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "cmake prepare build"
+            ],
+            "hide": true
+        },
+        {
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build",
+                ".",
+                "--config",
+                "Debug"
+            ],
+            "label": "cmake build debug",
+            "options": {
+                "cwd": "${workspaceRoot}/build"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "cmake prepare build debug"
+            ],
+            "hide": true
+        },
+        {
+            "type": "process",
+            "command": "./MidiPortsDev_artefacts/Release/Standalone/MidiPorts.exe",
+            "label": "build & run executable",
+            "options": {
+                "cwd": "${workspaceRoot}/build/"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "cmake build"
+            ]
+        },
+        {
+            "type": "process",
+            "command": "./MidiPortsDev_artefacts/Debug/Standalone/MidiPortsDev.exe",
+            "label": "build & run executable (debug)",
+            "options": {
+                "cwd": "${workspaceRoot}/build/"
+            },
+            "problemMatcher": [],
+            "dependsOn": [
+                "cmake build debug"
+            ]
+        }
+    ]
+}

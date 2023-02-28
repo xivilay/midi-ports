@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "LLDB - Launch Debug",
+            "program": "${workspaceRoot}/build/MidiPortsDev_artefacts/Debug/Standalone/MidiPortsDev.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "attach",
+            "name": "LLDB - Attach to AudioHost",
+            "program": "AudioPluginHost.exe"
+        },
+        {
+            "name": "VSDB - Launch Debug",
+            "type": "cppvsdbg",
+            "cwd": "${workspaceRoot}",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/MidiPortsDev_artefacts/Debug/Standalone/MidiPortsDev.exe"
+        },
+        {
+            "name": "VSDB - Attach to AudioHost",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
