@@ -75,7 +75,7 @@
         },
         {
             "type": "process",
-            "command": "./MidiPortsDev_artefacts/Release/Standalone/MidiPorts.exe",
+            "command": "./MidiPorts_artefacts/Release/Standalone/MidiPorts.exe",
             "label": "build & run executable",
             "options": {
                 "cwd": "${workspaceRoot}/build/"
