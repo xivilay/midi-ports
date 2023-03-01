@@ -9,26 +9,14 @@ class PluginProcessor : public AudioProcessor {
    public:
     PluginProcessor() : AudioProcessor(BusesProperties()), collector(), controller(&collector) {}
 
-    void prepareToPlay(double, int) override {}
+    void prepareToPlay(double sampleRate, int) override {
+        collector.reset(sampleRate);
+    }
     void releaseResources() override {}
 
     void processBlock(AudioBuffer<float> &buffer, MidiBuffer &midiMessages) override {
         buffer.clear();
-
-        // midiMessages.clear(); // filter host messages
-
-        collector.removeNextBlockOfMessages(midiMessages, buffer.getNumSamples());
-
-        MidiBuffer nextMessages;
-
-        for (const auto metadata : midiMessages) {
-            auto message = metadata.getMessage();
-            const auto time = metadata.samplePosition;
-            nextMessages.addEvent(message, time);
-        }
-
-        midiMessages.clear();
-        midiMessages.swapWith(nextMessages);
+        controller.processBlock(midiMessages, buffer.getNumSamples());
     }
 
     const String getName() const override { return ProjectInfo::projectName; }

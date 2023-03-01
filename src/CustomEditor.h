@@ -95,9 +95,10 @@ class CustomEditor : public AudioProcessorEditor {
         auto midiOutputIds = controller->getMidiOutputIds();
         auto midiOutputs = MidiOutput::getAvailableDevices();
         for (auto output : midiOutputs) {
-            bool state = midiOutputIds.indexOf(output.identifier) != -1;
-            bool const enabled = false; // not implemented
-            midiOutputMenu.addItem(getIntId(output.identifier), output.name, enabled, state);
+            if (!output.name.contains("Microsoft GS")) {
+                bool state = midiOutputIds.indexOf(output.identifier) != -1;
+                midiOutputMenu.addItem(getIntId(output.identifier), output.name, true, state);
+            }
         }
     }
 

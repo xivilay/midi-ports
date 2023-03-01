@@ -39,10 +39,10 @@ class MidiPortsController {
         for (auto output : midiOutputs) {
             if (id == output.identifier) {
                 if (midiOutputIds.contains(id)) {
+                    midiOutputIds.remove(midiOutputIds.indexOf(id));
                     auto device = MidiOutput::openDevice(id);
                     if (device.get() != nullptr) {
                         device.reset();
-                        midiOutputIds.remove(midiOutputIds.indexOf(id));
                     }
                     return false;
                 }
@@ -57,6 +57,31 @@ class MidiPortsController {
         return false;
     }
 
+    void processBlock(MidiBuffer& midiMessages, int numSamples) {
+        // midiMessages.clear(); // filter host messages
+
+        collector->removeNextBlockOfMessages(midiMessages, numSamples);
+
+        MidiBuffer nextMessages;
+
+        for (const auto metadata : midiMessages) {
+            auto message = metadata.getMessage();
+            const auto time = metadata.samplePosition;
+            nextMessages.addEvent(message, time);
+        }
+
+        midiMessages.clear();
+        midiMessages.swapWith(nextMessages);
+
+        for (auto id : midiOutputIds) {
+            const ScopedLock sl (midiCallbackLock);
+            auto device = MidiOutput::openDevice(id);
+            if (device != nullptr && device.get() != nullptr) {
+                device.get()->sendBlockOfMessagesNow(midiMessages);
+            }
+        }
+    }
+
     int getMidiInputsCount() { return midiInputIds.size(); }
     int getMidiOutputsCount() { return midiOutputIds.size(); }
 
@@ -69,5 +94,8 @@ class MidiPortsController {
     AudioDeviceManager deviceManager;
     SortedSet<String> midiInputIds;
     SortedSet<String> midiOutputIds;
+
     MidiMessageCollector* collector;
+
+    CriticalSection midiCallbackLock;
 };
