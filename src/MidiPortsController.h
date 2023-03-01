@@ -4,15 +4,16 @@
 
 class MidiPortsController {
    public:
-    MidiPortsController(MidiMessageCollector* c) {
+    MidiPortsController(MidiMessageCollector* c, AudioProcessor& p) {
         collector = c;
 
-        deviceManager.initialise(0, 1, nullptr, true, "", nullptr);
-        deviceManager.addMidiInputDeviceCallback({}, collector);
+        AudioDeviceManager::AudioDeviceSetup s;
+        s.sampleRate = p.getSampleRate();
+        s.bufferSize = p.getBlockSize();
+
+        deviceManager.initialise(0, 1, nullptr, false, "", &s);
     }
     ~MidiPortsController() {}
-
-    AudioDeviceManager* getDeviceManager() { return &deviceManager; }
 
     bool setMidiInput(String id) {
         auto midiInputs = MidiInput::getAvailableDevices();
@@ -20,11 +21,14 @@ class MidiPortsController {
             if (id == input.identifier) {
                 if (midiInputIds.contains(id)) {
                     deviceManager.setMidiInputDeviceEnabled(id, false);
+                    deviceManager.removeMidiInputDeviceCallback(id, collector);
                     midiInputIds.remove(midiInputIds.indexOf(id));
                     return false;
                 }
+
                 deviceManager.setMidiInputDeviceEnabled(id, true);
                 if (deviceManager.isMidiInputDeviceEnabled(id)) {
+                    deviceManager.addMidiInputDeviceCallback(id, collector);
                     midiInputIds.add(id);
                     return true;
                 }
@@ -60,21 +64,19 @@ class MidiPortsController {
     void processBlock(MidiBuffer& midiMessages, int numSamples) {
         // midiMessages.clear(); // filter host messages
 
+        const ScopedLock sl(lock);
+
         collector->removeNextBlockOfMessages(midiMessages, numSamples);
 
         MidiBuffer nextMessages;
 
         for (const auto metadata : midiMessages) {
-            auto message = metadata.getMessage();
-            const auto time = metadata.samplePosition;
-            nextMessages.addEvent(message, time);
+            nextMessages.addEvent(metadata.getMessage(), metadata.samplePosition);
         }
 
-        midiMessages.clear();
         midiMessages.swapWith(nextMessages);
 
         for (auto id : midiOutputIds) {
-            const ScopedLock sl (midiCallbackLock);
             auto device = MidiOutput::openDevice(id);
             if (device != nullptr && device.get() != nullptr) {
                 device.get()->sendBlockOfMessagesNow(midiMessages);
@@ -97,5 +99,5 @@ class MidiPortsController {
 
     MidiMessageCollector* collector;
 
-    CriticalSection midiCallbackLock;
+    CriticalSection lock;
 };

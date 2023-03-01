@@ -7,7 +7,7 @@
 
 class PluginProcessor : public AudioProcessor {
    public:
-    PluginProcessor() : AudioProcessor(BusesProperties()), collector(), controller(&collector) {}
+    PluginProcessor() : AudioProcessor(BusesProperties()), collector(), controller(&collector, *this) {}
 
     void prepareToPlay(double sampleRate, int) override {
         collector.reset(sampleRate);
@@ -38,8 +38,6 @@ class PluginProcessor : public AudioProcessor {
 
     void getStateInformation(MemoryBlock &) override {}
     void setStateInformation(const void *, int) override {}
-
-    void setMidiInput(String id) {}
 
    private:
     MidiPortsController controller;
