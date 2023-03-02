@@ -90,6 +90,8 @@ class MidiPortsController {
     auto getMidiInputIds() { return midiInputIds; }
     auto getMidiOutputIds() { return midiOutputIds; }
 
+    AudioDeviceManager* getDeviceManager() { return &deviceManager; }
+
     static const int HOST_INPUT_ID = 1;
 
    private:

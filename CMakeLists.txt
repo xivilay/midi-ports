@@ -13,9 +13,24 @@ set(VERSION "0.0.1")
 set(JUCE_DIR "../JUCE/")
 set(SRC_DIR "./src")
 
-project(${PROJECT_NAME} VERSION ${VERSION})
-
 add_subdirectory(${JUCE_DIR} "juce")
+
+if(WIN32)
+    message(STATUS "Building for Windows...")
+    set(ASIO_DIR "sdk/asio")
+    if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${ASIO_DIR})
+        set(BUILD_ASIO 1)
+    endif()
+endif()
+
+set(VST2_DIR "sdk/vst2")
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${VST2_DIR})
+    set(BUILD_VST2 1)
+    juce_set_vst2_sdk_path(${VST2_DIR})
+    list(APPEND FORMATS "VST")
+endif()
+
+project(${PROJECT_NAME} VERSION ${VERSION})
 
 juce_add_plugin(${PROJECT_NAME}
     COMPANY_NAME XivilaY
@@ -30,6 +45,19 @@ juce_generate_juce_header(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE
     "${SRC_DIR}/Main.cpp"
 )
+
+if(BUILD_VST2)
+    message(STATUS "Adding VST2...")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC JUCE_VST3_CAN_REPLACE_VST2=1)
+else()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC JUCE_VST3_CAN_REPLACE_VST2=0)
+endif(BUILD_VST2)
+
+if(BUILD_ASIO)
+    message(STATUS "Adding ASIO...")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE JUCE_ASIO=1)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${ASIO_DIR})
+endif(BUILD_ASIO)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     JUCE_VST3_CAN_REPLACE_VST2=0
