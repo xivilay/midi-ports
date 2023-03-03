@@ -60,7 +60,6 @@ if(BUILD_ASIO)
 endif(BUILD_ASIO)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-    JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_USE_WINRT_MIDI=1
 )
 
