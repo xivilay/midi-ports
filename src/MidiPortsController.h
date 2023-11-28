@@ -108,9 +108,9 @@ class MidiPortsController {
             for (auto* e : xml.getChildIterator()) {
                 auto id = e->getStringAttribute("id");
                 if (e->hasTagName("INPUT")) {
-                    midiInputIds.add(id);
+                    setMidiInput(id);
                 } else {
-                    midiOutputIds.add(id);
+                    setMidiOutput(id);
                 }
             }
             return true;
