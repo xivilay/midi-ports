@@ -9,9 +9,7 @@ class PluginProcessor : public AudioProcessor {
    public:
     PluginProcessor() : AudioProcessor(BusesProperties()), collector(), controller(&collector, *this) {}
 
-    void prepareToPlay(double sampleRate, int) override {
-        collector.reset(sampleRate);
-    }
+    void prepareToPlay(double sampleRate, int) override { collector.reset(sampleRate); }
     void releaseResources() override {}
 
     void processBlock(AudioBuffer<float> &buffer, MidiBuffer &midiMessages) override {
@@ -36,8 +34,16 @@ class PluginProcessor : public AudioProcessor {
 
     double getTailLengthSeconds() const override { return 0; }
 
-    void getStateInformation(MemoryBlock &) override {}
-    void setStateInformation(const void *, int) override {}
+    void getStateInformation(MemoryBlock &destData) override {
+        auto xml = controller.createXml();
+        copyXmlToBinary(*xml, destData);
+    }
+
+    void setStateInformation(const void *data, int sizeInBytes) override {
+        auto xmlState = getXmlFromBinary(data, sizeInBytes);
+
+        if (xmlState.get() != nullptr) controller.loadFromXml(*xmlState);
+    }
 
    private:
     MidiPortsController controller;

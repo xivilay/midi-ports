@@ -84,6 +84,40 @@ class MidiPortsController {
         }
     }
 
+    std::unique_ptr<XmlElement> createXml() const {
+        auto ports = std::make_unique<XmlElement>("PORTS");
+        if (!midiInputIds.isEmpty()) {
+            for (auto id : midiInputIds) {
+                XmlElement* input = new XmlElement("INPUT");
+                input->setAttribute("id", id);
+                ports->addChildElement(input);
+            }
+        }
+        if (!midiOutputIds.isEmpty()) {
+            for (auto id : midiOutputIds) {
+                XmlElement* output = new XmlElement("OUTPUT");
+                output->setAttribute("id", id);
+                ports->addChildElement(output);
+            }
+        }
+        return ports;
+    }
+
+    bool loadFromXml(const XmlElement& xml) {
+        if (xml.hasTagName("PORTS")) {
+            for (auto* e : xml.getChildIterator()) {
+                auto id = e->getStringAttribute("id");
+                if (e->hasTagName("INPUT")) {
+                    midiInputIds.add(id);
+                } else {
+                    midiOutputIds.add(id);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     int getMidiInputsCount() { return midiInputIds.size(); }
     int getMidiOutputsCount() { return midiOutputIds.size(); }
 
