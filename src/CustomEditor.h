@@ -26,9 +26,9 @@ class CustomEditor : public AudioProcessorEditor {
             midiInputMenu.showMenuAsync(
                 PopupMenu::Options{}.withTargetComponent(midiInputSelector).withStandardItemHeight(50), [&](int id) {
                     auto midiInputs = MidiInput::getAvailableDevices();
-                    for (auto output : midiInputs) {
-                        if (id == getIntId(output.identifier)) {
-                            controller->setMidiInput(output.identifier);
+                    for (auto input : midiInputs) {
+                        if (id == getIntId(input.identifier)) {
+                            controller->setMidiInput(input.identifier);
                             updateSelectedCountText();
                         }
                     }
@@ -58,6 +58,9 @@ class CustomEditor : public AudioProcessorEditor {
         } else {
             btButton.setEnabled(false);
         }
+        
+        // by some reason it only returns devices after second attempt
+        MidiInput::getAvailableDevices();
     }
     ~CustomEditor() {}
 
@@ -74,7 +77,7 @@ class CustomEditor : public AudioProcessorEditor {
     }
     void paint(Graphics& g) { g.fillAll(Colours::transparentWhite); }
 
-    int getIntId(String id) { return DefaultHashFunctions::generateHash(id, 100); }
+    int getIntId(String id) { return DefaultHashFunctions::generateHash(id, 100) + 1; }
 
     void fillInputSelector() {
         midiInputMenu.clear();

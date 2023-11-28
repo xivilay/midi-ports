@@ -13,6 +13,8 @@ set(VERSION "0.0.1")
 set(JUCE_DIR "../JUCE/")
 set(SRC_DIR "./src")
 
+project(${PROJECT_NAME} VERSION ${VERSION})
+
 add_subdirectory(${JUCE_DIR} "juce")
 
 if(WIN32)
@@ -29,8 +31,6 @@ if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${VST2_DIR})
     juce_set_vst2_sdk_path(${VST2_DIR})
     list(APPEND FORMATS "VST")
 endif()
-
-project(${PROJECT_NAME} VERSION ${VERSION})
 
 juce_add_plugin(${PROJECT_NAME}
     COMPANY_NAME XivilaY
