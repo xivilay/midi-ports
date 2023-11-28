@@ -16,7 +16,6 @@ class CustomEditor : public AudioProcessorEditor {
         addAndMakeVisible(midiInputSelector);
         addAndMakeVisible(midiOutputSelector);
 
-        addAndMakeVisible(btButton);
         addAndMakeVisible(settingsButton);
 
         settingsButton.onClick = [&] { showAudioSettingsDialog(); };
@@ -50,15 +49,14 @@ class CustomEditor : public AudioProcessorEditor {
         };
 
         if (BluetoothMidiDevicePairingDialogue::isAvailable()) {
+            addAndMakeVisible(btButton);
             btButton.onClick = [] {
                 RuntimePermissions::request(RuntimePermissions::bluetoothMidi, [](bool wasGranted) {
                     if (wasGranted) BluetoothMidiDevicePairingDialogue::open();
                 });
             };
-        } else {
-            btButton.setEnabled(false);
         }
-        
+
         // by some reason it only returns devices after second attempt
         MidiInput::getAvailableDevices();
     }
@@ -70,10 +68,10 @@ class CustomEditor : public AudioProcessorEditor {
 
         const int componentHeight = 50;
 
-        btButton.setBounds(0, 0, currentWidth / 2, componentHeight);
-        settingsButton.setBounds(currentWidth / 2, 0, currentWidth / 2, componentHeight);
-        midiInputSelector.setBounds(0, componentHeight, currentWidth / 2, componentHeight);
-        midiOutputSelector.setBounds(currentWidth / 2, componentHeight, currentWidth / 2, componentHeight);
+        midiInputSelector.setBounds(0, 0, currentWidth / 2, componentHeight);
+        midiOutputSelector.setBounds(currentWidth / 2, 0, currentWidth / 2, componentHeight);
+        settingsButton.setBounds(0, componentHeight, currentWidth / 2, componentHeight);
+        btButton.setBounds(currentWidth / 2, componentHeight, currentWidth / 2, componentHeight);
     }
     void paint(Graphics& g) { g.fillAll(Colours::transparentWhite); }
 
