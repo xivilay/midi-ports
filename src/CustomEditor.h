@@ -16,10 +16,6 @@ class CustomEditor : public AudioProcessorEditor {
         addAndMakeVisible(midiInputSelector);
         addAndMakeVisible(midiOutputSelector);
 
-        addAndMakeVisible(settingsButton);
-
-        settingsButton.onClick = [&] { showAudioSettingsDialog(); };
-
         midiInputSelector.onClick = [&] {
             fillInputSelector();
             midiInputMenu.showMenuAsync(
@@ -49,6 +45,7 @@ class CustomEditor : public AudioProcessorEditor {
         };
 
         if (BluetoothMidiDevicePairingDialogue::isAvailable()) {
+            setSize(editorWidth, editorHeight * 2);
             addAndMakeVisible(btButton);
             btButton.onClick = [] {
                 RuntimePermissions::request(RuntimePermissions::bluetoothMidi, [](bool wasGranted) {
@@ -70,7 +67,6 @@ class CustomEditor : public AudioProcessorEditor {
 
         midiInputSelector.setBounds(0, 0, currentWidth / 2, componentHeight);
         midiOutputSelector.setBounds(currentWidth / 2, 0, currentWidth / 2, componentHeight);
-        settingsButton.setBounds(0, componentHeight, currentWidth / 2, componentHeight);
         btButton.setBounds(currentWidth / 2, componentHeight, currentWidth / 2, componentHeight);
     }
     void paint(Graphics& g) { g.fillAll(Colours::transparentWhite); }
@@ -123,26 +119,9 @@ class CustomEditor : public AudioProcessorEditor {
     }
 
    private:
-    void showAudioSettingsDialog() {
-        DialogWindow::LaunchOptions o;
-
-        auto dm = std::make_unique<AudioDeviceSelectorComponent>(*(controller->getDeviceManager()), 0, 0, 0, 0, false,
-                                                                 false, false, true);
-
-        dm->setSize(500, 550);
-        o.content.setOwned(dm.release());
-
-        o.dialogTitle = TRANS("Audio Devices");
-        o.dialogBackgroundColour = o.content->getLookAndFeel().findColour(ResizableWindow::backgroundColourId);
-        o.escapeKeyTriggersCloseButton = true;
-        o.useNativeTitleBar = true;
-        o.resizable = true;
-
-        o.launchAsync();
-    }
 
     int editorWidth = 400;
-    int editorHeight = 100;
+    int editorHeight = 50;
 
     TextButton midiInputSelector;
     TextButton midiOutputSelector;
@@ -151,7 +130,6 @@ class CustomEditor : public AudioProcessorEditor {
     PopupMenu midiOutputMenu;
 
     TextButton btButton{"Connect Bluetooth Midi Inputs"};
-    TextButton settingsButton{"Settings"};
 
     MidiPortsController* controller;
 
