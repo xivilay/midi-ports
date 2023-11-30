@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(VERSION "0.1.0")
 set(JUCE_DIR "../JUCE/")
 set(SRC_DIR "./src")
+set(FORMATS "Standalone" "LV2" "VST3")
 
 project(${PROJECT_NAME} VERSION ${VERSION})
 
@@ -23,6 +24,10 @@ if(WIN32)
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${ASIO_DIR})
         set(BUILD_ASIO 1)
     endif()
+endif()
+
+IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    list(APPEND FORMATS "AU")
 endif()
 
 set(VST2_DIR "sdk/vst2")
@@ -37,7 +42,10 @@ juce_add_plugin(${PROJECT_NAME}
     PRODUCT_NAME "${PROJECT_NAME}"
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT TRUE
-    FORMATS VST3 Standalone
+    IS_MIDI_EFFECT TRUE
+    FORMATS ${FORMATS}
+    BLUETOOTH_PERMISSION_ENABLED TRUE 
+    BLUETOOTH_PERMISSION_TEXT "Needed for bluetooth midi input devices"
 )
 
 juce_generate_juce_header(${PROJECT_NAME})
@@ -62,6 +70,14 @@ endif(BUILD_ASIO)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     JUCE_USE_WINRT_MIDI=1
 )
+
+IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE 
+        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
+    ) 
+
+    add_link_options("-Wl,-weak_reference_mismatches,weak")
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_recommended_config_flags
