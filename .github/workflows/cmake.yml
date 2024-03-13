@@ -1,0 +1,116 @@
+name: CMake
+
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  BUILD_DIR: ${{ github.workspace }}/build
+  PROJECT_NAME: MidiPorts
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        runner: ['windows', 'ubuntu', 'macos']
+    runs-on: ${{ matrix.runner }}-latest
+    name: ${{ matrix.runner }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          submodules: 'recursive'
+        
+      - name: Install Linux Deps
+        if: runner.os == 'Linux'
+        run: |
+            sudo apt-get update &&  \
+            sudo apt install \
+              libasound2-dev \
+              libcurl4-openssl-dev \
+              libx11-dev \
+              libxinerama-dev \
+              libxext-dev \
+              libfreetype6-dev \
+              libwebkit2gtk-4.0-dev \
+              libglu1-mesa-dev
+
+      - name: Configure CMake
+        run: >
+          cmake
+          -B ${{ env.BUILD_DIR }}
+          -D CMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: >
+          cmake
+          --build ${{ env.BUILD_DIR }}
+          --config ${{ env.BUILD_TYPE }}
+
+      - name: Zip (Mac)
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}
+        run: >
+          cmake
+          -E tar cv ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_${{ matrix.runner }}.7z
+          --format=7zip
+          Standalone/
+          VST3/${{ env.PROJECT_NAME }}.vst3
+          AU/${{ env.PROJECT_NAME }}.component
+
+      - name: Zip (non Mac)
+        if: runner.os != 'macOS'
+        working-directory: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_artefacts/${{ env.BUILD_TYPE }}
+        run: >
+          cmake
+          -E tar cv ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_${{ matrix.runner }}.7z
+          --format=7zip
+          Standalone/
+          LV2/${{ env.PROJECT_NAME }}.lv2
+          VST3/${{ env.PROJECT_NAME }}.vst3
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECT_NAME }}_${{ matrix.runner }}
+          path: ${{ env.BUILD_DIR }}/${{ env.PROJECT_NAME }}_${{ matrix.runner }}.7z
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    if: contains(github.ref, 'tags/v')
+    runs-on: ubuntu-latest
+    needs: build
+    outputs: 
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Get Tag
+      id: tag
+      uses: dawidd6/action-get-tag@v1
+      with:
+        strip_v: true
+
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Extract Release Notes
+      id: extract-release-notes
+      uses: ffurrer2/extract-release-notes@v1
+
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v4
+
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "${{ env.PROJECT_NAME }}*/*.(zip|7z)"
+        artifactContentType: application/zip
+        token: ${{ secrets.GH_RELEASE }}
+        name: ${{ steps.tag.outputs.tag }}
+        body: ${{ steps.extract-release-notes.outputs.release_notes }}
+        prerelease: true
