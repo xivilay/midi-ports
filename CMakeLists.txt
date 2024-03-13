@@ -6,13 +6,17 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set(PROJECT_NAME "${PROJECT_NAME}Dev")
 endif()
 
+set(VERSION "0.1.0")
+
+set(FORMATS "Standalone" "AU" "LV2" "VST3")
+
+set(SRC_DIR "./src")
+set(JUCE_DIR "./external/juce/")
+
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(VERSION "0.1.0")
-set(JUCE_DIR "./external/juce/")
-set(SRC_DIR "./src")
-set(FORMATS "Standalone" "LV2" "VST3")
 
 project(${PROJECT_NAME} VERSION ${VERSION})
 
@@ -24,10 +28,6 @@ if(WIN32)
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${ASIO_DIR})
         set(BUILD_ASIO 1)
     endif()
-endif()
-
-IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    list(APPEND FORMATS "AU")
 endif()
 
 set(VST2_DIR "sdk/vst2")
@@ -43,16 +43,34 @@ juce_add_plugin(${PROJECT_NAME}
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT TRUE
     IS_MIDI_EFFECT TRUE
+    
+    PLUGIN_MANUFACTURER_CODE XivY
+    PLUGIN_CODE Xiv5
+    LV2URI "https://github.com/xivilay/midiPorts"
+    VST3_CATEGORIES "Tools"
     FORMATS ${FORMATS}
     BLUETOOTH_PERMISSION_ENABLED TRUE 
     BLUETOOTH_PERMISSION_TEXT "Needed for bluetooth midi input devices"
 )
+
 
 juce_generate_juce_header(${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} PRIVATE
     "${SRC_DIR}/Main.cpp"
 )
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    JUCE_USE_WINRT_MIDI=1
+)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE 
+        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
+    ) 
+
+    add_link_options("-Wl,-weak_reference_mismatches,weak")
+endif()
 
 if(BUILD_VST2)
     message(STATUS "Adding VST2...")
@@ -67,17 +85,8 @@ if(BUILD_ASIO)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ASIO_DIR})
 endif(BUILD_ASIO)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    JUCE_USE_WINRT_MIDI=1
-)
 
-IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE 
-        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
-    ) 
 
-    add_link_options("-Wl,-weak_reference_mismatches,weak")
-endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_recommended_config_flags
@@ -95,5 +104,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_events
     juce::juce_graphics
     juce::juce_gui_basics
-    juce::juce_gui_extra
 )
