@@ -6,17 +6,15 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     set(PROJECT_NAME "${PROJECT_NAME}Dev")
 endif()
 
-set(VERSION "0.1.0")
+set(VERSION "0.1.1")
 
 set(FORMATS "Standalone" "AU" "LV2" "VST3")
 
 set(SRC_DIR "./src")
 set(JUCE_DIR "./external/juce/")
 
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 
 project(${PROJECT_NAME} VERSION ${VERSION})
 
@@ -43,16 +41,14 @@ juce_add_plugin(${PROJECT_NAME}
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT TRUE
     IS_MIDI_EFFECT TRUE
-    
     PLUGIN_MANUFACTURER_CODE XivY
     PLUGIN_CODE Xiv5
-    LV2URI "https://github.com/xivilay/midiPorts"
+    LV2URI "https://github.com/xivilay/midi-ports"
     VST3_CATEGORIES "Tools"
     FORMATS ${FORMATS}
     BLUETOOTH_PERMISSION_ENABLED TRUE 
     BLUETOOTH_PERMISSION_TEXT "Needed for bluetooth midi input devices"
 )
-
 
 juce_generate_juce_header(${PROJECT_NAME})
 
@@ -62,13 +58,14 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     JUCE_USE_WINRT_MIDI=1
+    JUCE_USE_CURL=0
+    JUCE_WEB_BROWSER=0
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_compile_definitions(${PROJECT_NAME} PRIVATE 
         JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
     ) 
-
     add_link_options("-Wl,-weak_reference_mismatches,weak")
 endif()
 
@@ -84,9 +81,6 @@ if(BUILD_ASIO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE JUCE_ASIO=1)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ASIO_DIR})
 endif(BUILD_ASIO)
-
-
-
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_recommended_config_flags
